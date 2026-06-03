@@ -11,5 +11,5 @@ import org.mapstruct.MappingTarget;
 public interface OrderMapper {
     OrderEntity toEntity(CreateOrderRequest request);
     void updateEntity(@MappingTarget OrderEntity entity, UpdateOrderRequest request);
-    OrderResponse toResponse(OrderEntity order);
+    OrderResponse toDto(OrderEntity order);
 }

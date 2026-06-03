@@ -8,6 +8,6 @@ import java.util.List;
 public record UpdateOrderRequest(
         OrderStatus status,
         @Valid
-        List<OrderItemResponse> items
+        List<OrderItemRequest> items
 ) {
 }
