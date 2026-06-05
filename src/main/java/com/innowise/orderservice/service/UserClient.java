@@ -1,6 +1,7 @@
 package com.innowise.orderservice.service;
 
 import com.innowise.orderservice.dto.UserInfoResponse;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
@@ -20,16 +21,17 @@ public class UserClient {
     }
 
     @Cacheable(value = "users", key = "#userId")
+    @CircuitBreaker(name = "user-service", fallbackMethod = "getUserFallback")
     public UserInfoResponse getUserById(Long userId) {
         String url = userServiceUrl + "/api/users/" + userId;
 
-        try {
-            log.info("Calling User Service for userId: {}", userId);
-            return restTemplate.getForObject(url, UserInfoResponse.class);
-        } catch (Exception e) {
-            log.error("Failed to get user by id {}: {}", userId, e.getMessage());
-            return null;
-        }
+        log.info("Calling User Service for userId: {}", userId);
+        return restTemplate.getForObject(url, UserInfoResponse.class);
+    }
+
+    public UserInfoResponse getUserFallback(Long userId, Exception e) {
+        log.warn("User Service is down, returning fallback for userId: {}", userId);
+        return new UserInfoResponse(userId, "unknown@email.com", "Unknown", "Unknown", false);
     }
 
 }
