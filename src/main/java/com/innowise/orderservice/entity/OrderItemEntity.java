@@ -13,28 +13,17 @@ import lombok.Setter;
 })
 public class OrderItemEntity extends BaseEntity {
 
-    @Column(name = "order_id", nullable = false)
-    private Long orderId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false)
+    private OrderEntity order;
 
-    @Column(name = "item_id", nullable = false)
-    private Long itemId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "item_id", nullable = false)
+    private ItemEntity item;
 
     @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", insertable = false, updatable = false)
-    private OrderEntity order;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "item_id", insertable = false, updatable = false)
-    private ItemEntity item;
-
     public OrderItemEntity() {}
 
-    public OrderItemEntity(Long orderId, Long itemId, Integer quantity) {
-        this.orderId = orderId;
-        this.itemId = itemId;
-        this.quantity = quantity;
-    }
 }

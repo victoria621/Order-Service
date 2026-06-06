@@ -1,6 +1,8 @@
 package com.innowise.orderservice.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.SQLDelete;
@@ -35,7 +37,7 @@ public class OrderEntity extends BaseEntity {
     @Column(name = "deleted", nullable = false)
     private boolean deleted = false;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<OrderItemEntity> orderItems = new ArrayList<>();
 
     public OrderEntity() {}
@@ -48,13 +50,24 @@ public class OrderEntity extends BaseEntity {
     }
 
 
-    public void addOrderItem(OrderItemEntity orderItem) {
-        orderItems.add(orderItem);
+    public void addOrderItem(ItemEntity item, Integer quantity) {
+        OrderItemEntity orderItem = new OrderItemEntity();
+        orderItem.setItem(item);
+        orderItem.setQuantity(quantity);
         orderItem.setOrder(this);
+        this.orderItems.add(orderItem);
     }
 
     public void removeOrderItem(OrderItemEntity orderItem) {
         orderItems.remove(orderItem);
         orderItem.setOrder(null);
     }
+
+    @PrePersist
+    protected void onCreate() {
+        if (status == null) {
+            status = OrderStatus.NEW;
+        }
+    }
+
 }

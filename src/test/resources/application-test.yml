@@ -1,0 +1,14 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/orderdb_test
+    username: postgres
+    password: 565452
+  liquibase:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+user:
+  service:
+    url: http://localhost:8082

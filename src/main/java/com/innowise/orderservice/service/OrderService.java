@@ -51,6 +51,7 @@ public class OrderService {
                 order.getUserId(),
                 order.getStatus(),
                 order.getTotalPrice(),
+                order.isDeleted(),
                 itemResponses,
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
@@ -87,7 +88,6 @@ public class OrderService {
 
             OrderItemEntity orderItemEntity = new OrderItemEntity();
             orderItemEntity.setOrder(orderEntity);
-            orderItemEntity.setItemId(entity.getId());
             orderItemEntity.setQuantity(itemRequest.quantity());
 
             orderEntity.getOrderItems().add(orderItemEntity);
@@ -134,25 +134,21 @@ public class OrderService {
     public OrderResponse createOrder(CreateOrderRequest createOrderRequest) {
         OrderEntity orderEntity = orderMapper.toEntity(createOrderRequest);
         orderEntity.setDeleted(false);
+        orderEntity.setStatus(OrderStatus.NEW);
 
         BigDecimal totalPrice = BigDecimal.ZERO;
 
         for (OrderItemRequest itemRequest : createOrderRequest.items()) {
             ItemEntity item = itemService.findById(itemRequest.itemId());
 
-            OrderItemEntity orderItemEntity = new OrderItemEntity();
-            orderItemEntity.setOrder(orderEntity);
-            orderItemEntity.setItemId(item.getId());
-            orderItemEntity.setQuantity(itemRequest.quantity());
-
-            orderEntity.getOrderItems().add(orderItemEntity);
+            orderEntity.addOrderItem(item, itemRequest.quantity());
 
             totalPrice = totalPrice.add(item.getPrice().multiply(BigDecimal.valueOf(itemRequest.quantity())));
         }
         orderEntity.setTotalPrice(totalPrice);
 
         OrderEntity saved = orderRepository.save(orderEntity);
-        UserInfoResponse userInfoResponse= userClient.getUserById(saved.getUserId());
+        UserInfoResponse userInfoResponse = userClient.getUserById(saved.getUserId());
         return buildOrderResponse(saved, userInfoResponse);
     }
 

@@ -2,9 +2,14 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/orderdb
     username: postgres
-    password: ${DB_PASSWORD:565452}
+    password: 565452
   liquibase:
     change-log: classpath:/db/changelog/db.changelog-master.yaml
     enabled: true
 
-kind: Application
+server:
+  port: 8081
+
+user:
+  service:
+    url: http://localhost:8081

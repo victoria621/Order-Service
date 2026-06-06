@@ -5,6 +5,7 @@ import com.innowise.orderservice.dto.OrderResponse;
 import com.innowise.orderservice.dto.UpdateOrderRequest;
 import com.innowise.orderservice.entity.OrderEntity;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 
 @Mapper(componentModel = "spring",uses = {OrderItemMapper.class})
@@ -12,4 +13,6 @@ public interface OrderMapper {
     OrderEntity toEntity(CreateOrderRequest request);
     void updateEntity(@MappingTarget OrderEntity entity, UpdateOrderRequest request);
     OrderResponse toDto(OrderEntity order);
+    @Mapping(source = "deleted", target = "deleted")
+    OrderResponse toResponse(OrderEntity order);
 }

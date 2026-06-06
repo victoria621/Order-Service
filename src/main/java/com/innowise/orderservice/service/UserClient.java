@@ -8,16 +8,19 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-
 @Service
 @Slf4j
 public class UserClient {
     private final RestTemplate restTemplate;
-    @Value("${user.service.url:http://localhost:8080}")
     private String userServiceUrl;
 
     public UserClient(RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
+    }
+
+    @Value("${user.service.url:http://localhost:8080}")
+    public void setUserServiceUrl(String userServiceUrl) {
+        this.userServiceUrl = userServiceUrl;
     }
 
     @Cacheable(value = "users", key = "#userId")
@@ -33,5 +36,4 @@ public class UserClient {
         log.warn("User Service is down, returning fallback for userId: {}", userId);
         return new UserInfoResponse(userId, "unknown@email.com", "Unknown", "Unknown", false);
     }
-
 }

@@ -22,6 +22,7 @@ databaseChangeLog:
                   type: VARCHAR(50)
                   constraints:
                     nullable: false
+                  defaultValue: "NEW"
               - column:
                   name: total_price
                   type: DECIMAL(10,2)
