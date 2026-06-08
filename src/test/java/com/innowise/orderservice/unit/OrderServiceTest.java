@@ -4,7 +4,6 @@ import com.innowise.orderservice.dto.*;
 import com.innowise.orderservice.entity.ItemEntity;
 import com.innowise.orderservice.entity.OrderEntity;
 import com.innowise.orderservice.entity.OrderStatus;
-import com.innowise.orderservice.mapper.OrderItemMapper;
 import com.innowise.orderservice.mapper.OrderMapper;
 import com.innowise.orderservice.repository.OrderRepository;
 import com.innowise.orderservice.service.ItemService;
@@ -49,8 +48,6 @@ class OrderServiceTest {
     @Mock
     private UserClient userClient;
 
-    @Mock
-    private OrderItemMapper orderItemMapper;
 
     @InjectMocks
     private OrderService orderService;

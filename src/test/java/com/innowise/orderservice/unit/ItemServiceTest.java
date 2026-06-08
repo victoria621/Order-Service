@@ -80,8 +80,8 @@ class ItemServiceTest {
 
         assertThat(result).isNotNull();
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).id()).isEqualTo(1L);
-        assertThat(result.get(0).name()).isEqualTo("Test Item");
+        assertThat(result.getFirst().id()).isEqualTo(1L);
+        assertThat(result.getFirst().name()).isEqualTo("Test Item");
         verify(itemRepository, times(1)).findAll();
         verify(itemMapper, times(1)).toDto(testItem);
     }
