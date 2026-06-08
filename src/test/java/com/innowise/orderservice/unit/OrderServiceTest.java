@@ -4,6 +4,7 @@ import com.innowise.orderservice.dto.*;
 import com.innowise.orderservice.entity.ItemEntity;
 import com.innowise.orderservice.entity.OrderEntity;
 import com.innowise.orderservice.entity.OrderStatus;
+import com.innowise.orderservice.mapper.OrderItemMapper;
 import com.innowise.orderservice.mapper.OrderMapper;
 import com.innowise.orderservice.repository.OrderRepository;
 import com.innowise.orderservice.service.ItemService;
@@ -30,7 +31,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,8 +47,10 @@ class OrderServiceTest {
     private ItemService itemService;
 
     @Mock
-    private UserClient userClient;
+    private OrderItemMapper orderItemMapper;
 
+    @Mock
+    private UserClient userClient;
 
     @InjectMocks
     private OrderService orderService;
@@ -87,7 +90,7 @@ class OrderServiceTest {
         when(itemService.findById(1L)).thenReturn(item);
         when(orderMapper.toEntity(createOrderRequest)).thenReturn(testOrder);
         when(orderRepository.save(any(OrderEntity.class))).thenReturn(testOrder);
-        when(userClient.getUserById(1L)).thenReturn(testUserInfo);
+        when(userClient.getUserById(anyLong())).thenReturn(testUserInfo);
 
         OrderResponse response = orderService.createOrder(createOrderRequest);
 
@@ -99,7 +102,7 @@ class OrderServiceTest {
     @Test
     void getOrderById_Success() {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
-        when(userClient.getUserById(1L)).thenReturn(testUserInfo);
+        when(userClient.getUserById(anyLong())).thenReturn(testUserInfo);
 
         OrderResponse response = orderService.getOrderById(1L);
 
@@ -121,7 +124,7 @@ class OrderServiceTest {
     void updateOrder_Success() {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
         when(orderRepository.save(any(OrderEntity.class))).thenReturn(testOrder);
-        when(userClient.getUserById(1L)).thenReturn(testUserInfo);
+        when(userClient.getUserById(anyLong())).thenReturn(testUserInfo);
 
         OrderResponse response = orderService.updateOrder(1L, updateOrderRequest);
 
@@ -147,7 +150,7 @@ class OrderServiceTest {
         Page<OrderEntity> ordersPage = new PageImpl<>(List.of(testOrder), pageable, 1);
 
         when(orderRepository.findByUserId(1L, pageable)).thenReturn(ordersPage);
-        when(userClient.getUserById(1L)).thenReturn(testUserInfo);
+        when(userClient.getUserById(anyLong())).thenReturn(testUserInfo);
 
         Page<OrderResponse> response = orderService.getOrdersByUserId(1L, pageable);
 
@@ -161,7 +164,7 @@ class OrderServiceTest {
         Page<OrderEntity> ordersPage = new PageImpl<>(List.of(testOrder), pageable, 1);
 
         when(orderRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(ordersPage);
-        when(userClient.getUserById(1L)).thenReturn(testUserInfo);
+        when(userClient.getUserById(anyLong())).thenReturn(testUserInfo);
 
         Page<OrderResponse> response = orderService.getOrdersWithFilters(
                 pageable, null, null, List.of(OrderStatus.NEW)

@@ -42,9 +42,21 @@ public class OrderService {
     }
 
     private OrderResponse buildOrderResponse(OrderEntity order, UserInfoResponse userInfo) {
-        List<OrderItemResponse> itemResponses = order.getOrderItems().stream()
+        List<OrderItemResponse> itemResponses = order.getOrderItems() != null
+                ? order.getOrderItems().stream()
                 .map(orderItemMapper::toDto)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList())
+                : List.of();
+
+        UserInfoResponse safeUserInfo = userInfo != null
+                ? userInfo
+                : new UserInfoResponse(
+                order.getUserId(),
+                "unknown@email.com",
+                "Unknown",
+                "User",
+                false
+        );
 
         return new OrderResponse(
                 order.getId(),
@@ -55,7 +67,7 @@ public class OrderService {
                 itemResponses,
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
-                userInfo
+                safeUserInfo
         );
     }
 
