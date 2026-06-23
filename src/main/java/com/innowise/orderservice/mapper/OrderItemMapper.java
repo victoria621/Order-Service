@@ -15,7 +15,7 @@ public interface OrderItemMapper {
     @Mapping(target = "itemPrice", source = "item.price")
     @Mapping(target = "quantity", source = "quantity")
     @Mapping(target = "subtotal", ignore = true)
-    OrderItemResponse toDto(OrderItemEntity item);
+    OrderItemResponse toDto(OrderItemEntity entity);
 
 
     List<OrderItemResponse> toDtoList(List<OrderItemEntity> entities);

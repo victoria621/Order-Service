@@ -136,7 +136,7 @@ class OrderControllerIntegrationTest {
     void getOrdersByUserId_ShouldReturnOrders() throws Exception {
         createOrderAndGetId();
 
-        mockMvc.perform(get("/api/orders/user/1")
+        mockMvc.perform(get("/api/orders/users/{userId}/orders", 1L)
                         .param("page", "0")
                         .param("size", "10"))
                 .andExpect(status().isOk())
@@ -179,15 +179,10 @@ class OrderControllerIntegrationTest {
     void deleteOrder_ShouldReturn204() throws Exception {
         Long orderId = createOrderAndGetId();
 
-        mockMvc.perform(get("/api/orders/{id}", orderId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.deleted").value(false));
-
         mockMvc.perform(delete("/api/orders/{id}", orderId))
                 .andExpect(status().isNoContent());
 
         mockMvc.perform(get("/api/orders/{id}", orderId))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.deleted").value(true));
+                .andExpect(status().isNotFound());
     }
 }

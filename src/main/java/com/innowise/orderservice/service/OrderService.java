@@ -44,24 +44,32 @@ public class OrderService {
             return null;
         }
 
-        List<OrderItemResponse> itemsWithSubtotal = response.items() != null ?
-                response.items().stream()
-                        .map(item -> {
-                            BigDecimal subtotal = BigDecimal.ZERO;
-                            if (item.itemPrice() != null && item.quantity() != null) {
-                                subtotal = item.itemPrice().multiply(BigDecimal.valueOf(item.quantity()));
-                            }
-                            return new OrderItemResponse(
-                                    item.id(),
-                                    item.itemId(),
-                                    item.itemName(),
-                                    item.itemPrice(),
-                                    item.quantity(),
-                                    subtotal
-                            );
-                        })
-                        .collect(Collectors.toList())
-                : List.of();
+        List<OrderItemResponse> itemsWithSubtotal = response.items().stream()
+                .map(item -> {
+                    BigDecimal subtotal = BigDecimal.ZERO;
+                    if (item.itemPrice() != null && item.quantity() != null) {
+                        subtotal = item.itemPrice().multiply(BigDecimal.valueOf(item.quantity()));
+                    }
+                    return new OrderItemResponse(
+                            item.id(),
+                            item.itemId(),
+                            item.itemName(),
+                            item.itemPrice(),
+                            item.quantity(),
+                            subtotal
+                    );
+                })
+                .collect(Collectors.toList());
+
+        UserInfoResponse safeUserInfo = userInfo != null
+                ? userInfo
+                : new UserInfoResponse(
+                response.userId(),
+                "unknown@email.com",
+                "Unknown",
+                "User",
+                false
+        );
 
         return new OrderResponse(
                 response.id(),
@@ -72,13 +80,7 @@ public class OrderService {
                 itemsWithSubtotal,
                 response.createdAt(),
                 response.updatedAt(),
-                userInfo != null ? userInfo : new UserInfoResponse(
-                        response.userId(),
-                        "unknown@email.com",
-                        "Unknown",
-                        "User",
-                        false
-                )
+                safeUserInfo
         );
     }
 

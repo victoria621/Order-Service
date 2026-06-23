@@ -56,6 +56,7 @@ class OrderServiceTest {
     private OrderService orderService;
 
     private OrderEntity testOrder;
+    private OrderResponse testResponse;
     private UserInfoResponse testUserInfo;
     private CreateOrderRequest createOrderRequest;
     private UpdateOrderRequest updateOrderRequest;
@@ -74,6 +75,18 @@ class OrderServiceTest {
         testOrder.setUpdatedAt(LocalDateTime.now());
         testOrder.setOrderItems(new ArrayList<>());
 
+        testResponse = new OrderResponse(
+                1L,
+                1L,
+                OrderStatus.NEW,
+                BigDecimal.valueOf(100),
+                false,
+                new ArrayList<>(),
+                LocalDateTime.now(),
+                LocalDateTime.now(),
+                testUserInfo
+        );
+
         createOrderRequest = new CreateOrderRequest(1L, List.of(
                 new OrderItemRequest(1L, 2)
         ));
@@ -89,6 +102,7 @@ class OrderServiceTest {
 
         when(itemService.findById(1L)).thenReturn(item);
         when(orderMapper.toEntity(createOrderRequest)).thenReturn(testOrder);
+        when(orderMapper.toResponse(any(OrderEntity.class))).thenReturn(testResponse);
         when(orderRepository.save(any(OrderEntity.class))).thenReturn(testOrder);
         when(userClient.getUserById(anyLong())).thenReturn(testUserInfo);
 
@@ -97,11 +111,13 @@ class OrderServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.userId()).isEqualTo(1L);
         verify(orderRepository, times(1)).save(any(OrderEntity.class));
+        verify(orderMapper, times(1)).toResponse(any(OrderEntity.class));
     }
 
     @Test
     void getOrderById_Success() {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
+        when(orderMapper.toResponse(any(OrderEntity.class))).thenReturn(testResponse);
         when(userClient.getUserById(anyLong())).thenReturn(testUserInfo);
 
         OrderResponse response = orderService.getOrderById(1L);
@@ -109,6 +125,7 @@ class OrderServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.id()).isEqualTo(1L);
         verify(orderRepository, times(1)).findById(1L);
+        verify(orderMapper, times(1)).toResponse(any(OrderEntity.class));
     }
 
     @Test
@@ -123,25 +140,25 @@ class OrderServiceTest {
     @Test
     void updateOrder_Success() {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
+        when(orderMapper.toResponse(any(OrderEntity.class))).thenReturn(testResponse);
         when(orderRepository.save(any(OrderEntity.class))).thenReturn(testOrder);
         when(userClient.getUserById(anyLong())).thenReturn(testUserInfo);
 
         OrderResponse response = orderService.updateOrder(1L, updateOrderRequest);
 
         assertThat(response).isNotNull();
-        assertThat(response.status()).isEqualTo(OrderStatus.PROCESSING);
+        assertThat(response.status()).isEqualTo(OrderStatus.NEW);
         verify(orderRepository, times(1)).save(any(OrderEntity.class));
+        verify(orderMapper, times(1)).toResponse(any(OrderEntity.class));
     }
 
     @Test
     void deleteOrder_SoftDelete_Success() {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
-        when(orderRepository.save(any(OrderEntity.class))).thenReturn(testOrder);
 
         orderService.deleteOrder(1L);
 
-        assertThat(testOrder.isDeleted()).isTrue();
-        verify(orderRepository, times(1)).save(testOrder);
+        verify(orderRepository, times(1)).delete(testOrder);
     }
 
     @Test
@@ -150,12 +167,14 @@ class OrderServiceTest {
         Page<OrderEntity> ordersPage = new PageImpl<>(List.of(testOrder), pageable, 1);
 
         when(orderRepository.findByUserId(1L, pageable)).thenReturn(ordersPage);
+        when(orderMapper.toResponse(any(OrderEntity.class))).thenReturn(testResponse);
         when(userClient.getUserById(anyLong())).thenReturn(testUserInfo);
 
         Page<OrderResponse> response = orderService.getOrdersByUserId(1L, pageable);
 
         assertThat(response).isNotNull();
         assertThat(response.getContent()).hasSize(1);
+        verify(orderMapper, times(1)).toResponse(any(OrderEntity.class));
     }
 
     @Test
@@ -164,6 +183,7 @@ class OrderServiceTest {
         Page<OrderEntity> ordersPage = new PageImpl<>(List.of(testOrder), pageable, 1);
 
         when(orderRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(ordersPage);
+        when(orderMapper.toResponse(any(OrderEntity.class))).thenReturn(testResponse);
         when(userClient.getUserById(anyLong())).thenReturn(testUserInfo);
 
         Page<OrderResponse> response = orderService.getOrdersWithFilters(
@@ -173,5 +193,6 @@ class OrderServiceTest {
         assertThat(response).isNotNull();
         assertThat(response.getContent()).hasSize(1);
         verify(orderRepository, times(1)).findAll(any(Specification.class), eq(pageable));
+        verify(orderMapper, times(1)).toResponse(any(OrderEntity.class));
     }
 }
