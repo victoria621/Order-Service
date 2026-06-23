@@ -2,11 +2,9 @@ package com.innowise.orderservice.mapper;
 
 import com.innowise.orderservice.dto.OrderItemResponse;
 import com.innowise.orderservice.entity.OrderItemEntity;
-import org.mapstruct.AfterMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 @Mapper(componentModel = "spring")
@@ -22,11 +20,4 @@ public interface OrderItemMapper {
 
     List<OrderItemResponse> toDtoList(List<OrderItemEntity> entities);
 
-    @AfterMapping
-    default BigDecimal calculateSubtotal(OrderItemEntity entity) {
-        if (entity == null || entity.getItem() == null || entity.getQuantity() == null) {
-            return BigDecimal.ZERO;
-        }
-        return entity.getItem().getPrice().multiply(BigDecimal.valueOf(entity.getQuantity()));
-    }
 }

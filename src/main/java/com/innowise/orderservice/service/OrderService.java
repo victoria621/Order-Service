@@ -40,16 +40,45 @@ public class OrderService {
 
 
     private OrderResponse enrichWithUserInfo(OrderResponse response, UserInfoResponse userInfo) {
+        if (response == null) {
+            return null;
+        }
+
+        List<OrderItemResponse> itemsWithSubtotal = response.items() != null ?
+                response.items().stream()
+                        .map(item -> {
+                            BigDecimal subtotal = BigDecimal.ZERO;
+                            if (item.itemPrice() != null && item.quantity() != null) {
+                                subtotal = item.itemPrice().multiply(BigDecimal.valueOf(item.quantity()));
+                            }
+                            return new OrderItemResponse(
+                                    item.id(),
+                                    item.itemId(),
+                                    item.itemName(),
+                                    item.itemPrice(),
+                                    item.quantity(),
+                                    subtotal
+                            );
+                        })
+                        .collect(Collectors.toList())
+                : List.of();
+
         return new OrderResponse(
                 response.id(),
                 response.userId(),
                 response.status(),
                 response.totalPrice(),
                 response.deleted(),
-                response.items(),
+                itemsWithSubtotal,
                 response.createdAt(),
                 response.updatedAt(),
-                userInfo
+                userInfo != null ? userInfo : new UserInfoResponse(
+                        response.userId(),
+                        "unknown@email.com",
+                        "Unknown",
+                        "User",
+                        false
+                )
         );
     }
 
