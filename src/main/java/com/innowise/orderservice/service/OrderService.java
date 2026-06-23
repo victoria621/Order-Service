@@ -5,7 +5,6 @@ import com.innowise.orderservice.entity.ItemEntity;
 import com.innowise.orderservice.entity.OrderEntity;
 import com.innowise.orderservice.entity.OrderItemEntity;
 import com.innowise.orderservice.entity.OrderStatus;
-import com.innowise.orderservice.mapper.OrderItemMapper;
 import com.innowise.orderservice.mapper.OrderMapper;
 import com.innowise.orderservice.repository.OrderRepository;
 import com.innowise.orderservice.specification.OrderSpecifications;
@@ -30,44 +29,27 @@ public class OrderService {
     private final OrderMapper orderMapper;
     private final ItemService itemService;
     private final UserClient userClient;
-    private final OrderItemMapper orderItemMapper;
 
     public OrderService(OrderRepository orderRepository, OrderMapper orderMapper,
-                        ItemService itemService, UserClient userClient, OrderItemMapper orderItemMapper) {
+                        ItemService itemService, UserClient userClient) {
         this.orderRepository = orderRepository;
         this.orderMapper = orderMapper;
         this.itemService = itemService;
         this.userClient = userClient;
-        this.orderItemMapper = orderItemMapper;
     }
 
-    private OrderResponse buildOrderResponse(OrderEntity order, UserInfoResponse userInfo) {
-        List<OrderItemResponse> itemResponses = order.getOrderItems() != null
-                ? order.getOrderItems().stream()
-                .map(orderItemMapper::toDto)
-                .collect(Collectors.toList())
-                : List.of();
 
-        UserInfoResponse safeUserInfo = userInfo != null
-                ? userInfo
-                : new UserInfoResponse(
-                order.getUserId(),
-                "unknown@email.com",
-                "Unknown",
-                "User",
-                false
-        );
-
+    private OrderResponse enrichWithUserInfo(OrderResponse response, UserInfoResponse userInfo) {
         return new OrderResponse(
-                order.getId(),
-                order.getUserId(),
-                order.getStatus(),
-                order.getTotalPrice(),
-                order.isDeleted(),
-                itemResponses,
-                order.getCreatedAt(),
-                order.getUpdatedAt(),
-                safeUserInfo
+                response.id(),
+                response.userId(),
+                response.status(),
+                response.totalPrice(),
+                response.deleted(),
+                response.items(),
+                response.createdAt(),
+                response.updatedAt(),
+                userInfo
         );
     }
 
@@ -87,7 +69,9 @@ public class OrderService {
 
         OrderEntity updated = orderRepository.save(orderEntity);
         UserInfoResponse userInfoResponse= userClient.getUserById(updated.getUserId());
-        return buildOrderResponse(updated, userInfoResponse);
+
+        OrderResponse response = orderMapper.toResponse(updated);
+        return enrichWithUserInfo(response, userInfoResponse);
     }
 
     private void updateOrderItems(OrderEntity orderEntity, @Valid List<OrderItemRequest> items) {
@@ -100,6 +84,7 @@ public class OrderService {
 
             OrderItemEntity orderItemEntity = new OrderItemEntity();
             orderItemEntity.setOrder(orderEntity);
+            orderItemEntity.setItem(entity);
             orderItemEntity.setQuantity(itemRequest.quantity());
 
             orderEntity.getOrderItems().add(orderItemEntity);
@@ -117,7 +102,8 @@ public class OrderService {
                 .orElseThrow(() -> new EntityNotFoundException("Order with id: " + id + " not found"));
 
         UserInfoResponse userInfoResponse= userClient.getUserById(order.getUserId());
-        return buildOrderResponse(order, userInfoResponse);
+        OrderResponse response = orderMapper.toResponse(order);
+        return enrichWithUserInfo(response, userInfoResponse);
     }
 
     @Transactional
@@ -125,8 +111,7 @@ public class OrderService {
         OrderEntity order = orderRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException("Order with id: " + id + " not found")
         );
-        order.setDeleted(true);
-        orderRepository.save(order);
+        orderRepository.delete(order);
     }
 
     public Page<OrderResponse> getOrdersByUserId(Long userId, Pageable pageable) {
@@ -136,7 +121,10 @@ public class OrderService {
         UserInfoResponse userInfoResponse = userClient.getUserById(userId);
 
         List<OrderResponse> orderResponses = ordersPage.getContent().stream()
-                .map(order -> buildOrderResponse(order, userInfoResponse))
+                .map(order -> {
+                    OrderResponse response = orderMapper.toResponse(order);
+                    return enrichWithUserInfo(response, userInfoResponse);
+                })
                 .collect(Collectors.toList());
 
         return new PageImpl<>(orderResponses, pageable, ordersPage.getTotalElements());
@@ -161,7 +149,9 @@ public class OrderService {
 
         OrderEntity saved = orderRepository.save(orderEntity);
         UserInfoResponse userInfoResponse = userClient.getUserById(saved.getUserId());
-        return buildOrderResponse(saved, userInfoResponse);
+
+        OrderResponse response = orderMapper.toResponse(saved);
+        return enrichWithUserInfo(response, userInfoResponse);
     }
 
     public Page<OrderResponse> getOrdersWithFilters(Pageable pageable,
@@ -183,7 +173,8 @@ public class OrderService {
         List<OrderResponse> orderResponses = ordersPage.getContent().stream()
                 .map(order -> {
                     UserInfoResponse userInfo = userClient.getUserById(order.getUserId());
-                    return buildOrderResponse(order, userInfo);
+                    OrderResponse response = orderMapper.toResponse(order);
+                    return enrichWithUserInfo(response, userInfo);
                 })
                 .collect(Collectors.toList());
 

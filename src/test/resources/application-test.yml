@@ -1,14 +1,16 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/orderdb_test
-    username: postgres
-    password: 565452
+    url: ${TEST_DB_URL:jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1}
+    username: ${TEST_DB_USERNAME:postgres}
+    password: ${TEST_DB_PASSWORD:565452}
+    driver-class-name: ${TEST_DB_DRIVER:org.h2.Driver}
   liquibase:
     enabled: false
   jpa:
     hibernate:
       ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
 
 user:
   service:
-    url: http://localhost:8082
+    url: ${TEST_USER_SERVICE_URL:http://localhost:8082}

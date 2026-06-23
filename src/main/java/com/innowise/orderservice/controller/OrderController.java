@@ -49,10 +49,19 @@ public class OrderController {
         return ResponseEntity.ok(orderService.getOrdersWithFilters(pageable, fromDate, toDate, statuses));
     }
 
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<Page<OrderResponse>> getOrdersByUserId(@PathVariable Long userId, Pageable pageable){
+    @GetMapping("/users/{userId}/orders")
+    public ResponseEntity<Page<OrderResponse>> getOrdersByUserId(@PathVariable Long userId, Pageable pageable) {
         log.info("Get orders by user id: {}", userId);
         return ResponseEntity.ok(orderService.getOrdersByUserId(userId, pageable));
+    }
+
+    @Deprecated
+    @GetMapping("/orders/user/{userId}")
+    public ResponseEntity<Page<OrderResponse>> getOrdersByUserIdDeprecated(@PathVariable Long userId) {
+        log.warn("Deprecated endpoint used: /api/orders/user/{}", userId);
+        return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
+                .header("Location", "/api/users/" + userId + "/orders")
+                .build();
     }
 
     @PutMapping("/{id}")
