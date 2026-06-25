@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  postgres-order:
+    image: postgres:15
+    container_name: order-postgres
+    environment:
+      POSTGRES_DB: ${ORDER_DB_NAME:-orderdb}
+      POSTGRES_USER: ${ORDER_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${ORDER_DB_PASSWORD:-postgres}
+    ports:
+      - "${ORDER_DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_order_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ORDER_DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - order-network
+
+  postgres-user:
+    image: postgres:15
+    container_name: user-postgres
+    environment:
+      POSTGRES_DB: ${USER_DB_NAME:-user_service}
+      POSTGRES_USER: ${USER_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${USER_DB_PASSWORD:-password}
+    ports:
+      - "${USER_DB_PORT:-5433}:5432"
+    volumes:
+      - postgres_user_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${USER_DB_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - order-network
+
+  user-service:
+    image: userservice-app:latest
+    container_name: user-service
+    environment:
+      SERVER_PORT: ${USER_SERVICE_PORT:-8080}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-user:5432/${USER_DB_NAME:-user_service}
+      SPRING_DATASOURCE_USERNAME: ${USER_DB_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${USER_DB_PASSWORD:-password}
+    ports:
+      - "${USER_SERVICE_PORT:-8080}:8080"
+    depends_on:
+      postgres-user:
+        condition: service_healthy
+    networks:
+      - order-network
+    restart: on-failure
+
+  order-service:
+    build: .
+    container_name: order-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-order:5432/${ORDER_DB_NAME:-orderdb}
+      SPRING_DATASOURCE_USERNAME: ${ORDER_DB_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${ORDER_DB_PASSWORD:-postgres}
+      SERVER_PORT: ${ORDER_SERVICE_PORT:-8081}
+      USER_SERVICE_URL: http://user-service:${USER_SERVICE_PORT:-8080}
+    ports:
+      - "${ORDER_SERVICE_PORT:-8081}:8081"
+    depends_on:
+      postgres-order:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+    networks:
+      - order-network
+    restart: on-failure
+
+  redis:
+    image: redis:7-alpine
+    container_name: order-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - order-network
+    restart: on-failure
+
+networks:
+  order-network:
+    driver: bridge
+
+volumes:
+  postgres_order_data:
+  postgres_user_data:
