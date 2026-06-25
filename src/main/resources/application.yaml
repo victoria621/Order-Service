@@ -15,7 +15,7 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "*"
-        spring.json.type.mapping: payment-event:com.example.orderservice.dto.PaymentEvent
+        spring.json.type.mapping: payment-event:com.innowise.orderservice.dto.PaymentEvent
 
 server:
   port: ${SERVER_PORT:8081}
